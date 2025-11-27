@@ -1,0 +1,120 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="wessal_grad_blue" x1="40" y1="40" x2="160" y2="160" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#2563EB" />
+        <stop offset="1" stopColor="#06B6D4" />
+      </linearGradient>
+      <linearGradient id="wessal_grad_green" x1="160" y1="40" x2="40" y2="160" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#059669" />
+        <stop offset="1" stopColor="#34D399" />
+      </linearGradient>
+      <linearGradient id="wessal_grad_border" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#2563EB" stopOpacity="0" />
+        <stop offset="50%" stopColor="#06B6D4" stopOpacity="1" />
+        <stop offset="100%" stopColor="#34D399" stopOpacity="0" />
+      </linearGradient>
+      <style>
+           @keyframes wessalPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.9; }
+          }
+          @keyframes wessalDraw {
+            from { stroke-dashoffset: 500; opacity: 0; }
+            to { stroke-dashoffset: 0; opacity: 1; }
+          }
+          @keyframes wessalSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes wessalSpinReverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+          }
+          .wessal-anim-path {
+            stroke-dasharray: 500;
+            animation: wessalDraw 3s ease-out forwards;
+          }
+          .wessal-anim-dot {
+            transform-origin: 100px 100px;
+            animation: wessalPulse 3s infinite ease-in-out;
+          }
+          .wessal-border-spin {
+            transform-origin: 100px 100px;
+            animation: wessalSpin 8s linear infinite;
+          }
+          .wessal-border-spin-reverse {
+            transform-origin: 100px 100px;
+            animation: wessalSpinReverse 12s linear infinite;
+          }
+      </style>
+    </defs>
+    
+    <!-- Rotating Border (Original) -->
+    <circle 
+        cx="100" cy="100" r="90" 
+        stroke="url(#wessal_grad_border)" 
+        stroke-width="3" 
+        stroke-linecap="round"
+        class="wessal-border-spin"
+        stroke-dasharray="150 400"
+    />
+
+    <!-- New White Animated Border Ring -->
+    <circle 
+        cx="100" cy="100" r="82" 
+        stroke="white" 
+        stroke-width="1.5" 
+        stroke-linecap="round"
+        class="wessal-border-spin-reverse"
+        stroke-dasharray="40 10 40 400"
+        stroke-opacity="0.5"
+    />
+
+    <circle 
+        cx="100" cy="100" r="90" 
+        stroke="url(#wessal_grad_blue)" 
+        stroke-width="1" 
+        stroke-opacity="0.1"
+    />
+
+    <!-- White Outline for W Shape -->
+    <path 
+        class="wessal-anim-path"
+        d="M50 50 C 50 50, 70 170, 90 130 L 100 100" 
+        stroke="white" 
+        stroke-width="32" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+    />
+    <path 
+        class="wessal-anim-path"
+        style="animation-delay: 0.3s"
+        d="M100 100 L 110 130 C 130 170, 150 50, 150 50" 
+        stroke="white" 
+        stroke-width="32" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+    />
+
+    <!-- Main W Shape -->
+    <path 
+        class="wessal-anim-path"
+        d="M50 50 C 50 50, 70 170, 90 130 L 100 100" 
+        stroke="url(#wessal_grad_blue)" 
+        stroke-width="26" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+    />
+    <path 
+        class="wessal-anim-path"
+        style="animation-delay: 0.3s"
+        d="M100 100 L 110 130 C 130 170, 150 50, 150 50" 
+        stroke="url(#wessal_grad_green)" 
+        stroke-width="26" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+    />
+    
+    <circle cx="100" cy="100" r="16" fill="white" class="wessal-anim-dot" />
+    <circle cx="100" cy="100" r="10" fill="url(#wessal_grad_blue)" class="wessal-anim-dot" />
+</svg>
