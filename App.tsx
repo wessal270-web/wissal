@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
-import { LanguageProvider } from './context/LanguageContext.tsx';
+import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { FavoritesProvider } from './hooks/useFavorites';
 import { AuthProvider } from './context/AuthContext';
