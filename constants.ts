@@ -56,7 +56,7 @@ export const TEXTS: Translations = {
   noFavorites: { ar: 'قائمة المفضلة فارغة. قم بإضافة جمعيات لكي تظهر هنا.', fr: 'La liste de favoris est vide. Ajoutez des associations pour les voir ici.' },
   associationsMap: { ar: 'خريطة مواقع الجمعيات', fr: 'Carte des emplacements des associations' },
   viewDetails: { ar: 'عرض التفاصيل', fr: 'Voir les détails' },
-  footerText: { ar: '© 2024 وصال - جميع الحقوق محفوظة.', fr: '© 2024 Wessal - Tous droits réservés.' },
+  footerText: { ar: '© 2025 وصال - جميع الحقوق محفوظة.', fr: '© 2025 Wessal - Tous droits réservés.' },
   home: { ar: 'الرئيسية', fr: 'Accueil' },
   login: { ar: 'تسجيل الدخول', fr: 'Connexion' },
   register: { ar: 'تسجيل جديد', fr: 'Inscription' },

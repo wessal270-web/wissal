@@ -81,26 +81,26 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 2. Stats Section (Redesigned & Modern) */}
+      {/* 2. Stats Section (Redesigned & Modern - Side by Side on Mobile) */}
       <section className="relative -mt-16 z-20 mb-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-6 max-w-6xl mx-auto">
              <StatCard 
-               icon={<HomeIcon className="w-8 h-8" />} 
+               icon={<HomeIcon className="w-5 h-5 md:w-8 md:h-8" />} 
                count={totalAssociations} 
                label="إجمالي الجمعيات" 
                gradient="from-indigo-500 via-purple-500 to-purple-600"
                delay="0ms"
              />
              <StatCard 
-               icon={<YouthIcon className="w-8 h-8" />} 
+               icon={<YouthIcon className="w-5 h-5 md:w-8 md:h-8" />} 
                count={youthCount} 
                label="جمعية شبانية" 
                gradient="from-emerald-400 via-teal-500 to-teal-600"
                delay="100ms"
              />
              <StatCard 
-               icon={<SportsIcon className="w-8 h-8" />} 
+               icon={<SportsIcon className="w-5 h-5 md:w-8 md:h-8" />} 
                count={sportsCount} 
                label="نادي رياضي" 
                gradient="from-blue-500 via-cyan-500 to-cyan-600"
@@ -248,23 +248,25 @@ const StatCard = ({ icon, count, label, gradient, delay }: { icon: React.ReactNo
 
   return (
     <div 
-      className="relative group bg-white dark:bg-gray-800 p-8 rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 dark:border-gray-700 overflow-hidden"
+      className="relative group bg-white dark:bg-gray-800 p-3 py-4 md:p-8 rounded-2xl md:rounded-[2rem] shadow-lg md:shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 dark:border-gray-700 overflow-hidden"
       style={{ animationDelay: delay }}
     >
-      {/* Decorative Gradient Blob */}
-      <div className={`absolute -top-12 -left-12 w-40 h-40 bg-gradient-to-br ${gradient} opacity-10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700`}></div>
-      <div className={`absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl ${gradient} opacity-5 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700`}></div>
+      {/* Decorative Gradient Blob (Hidden on mobile to reduce noise) */}
+      <div className={`hidden md:block absolute -top-12 -left-12 w-40 h-40 bg-gradient-to-br ${gradient} opacity-10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700`}></div>
+      <div className={`hidden md:block absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl ${gradient} opacity-5 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700`}></div>
 
-      <div className="relative z-10 flex items-center justify-between">
-        <div className="flex flex-col space-y-2">
-            <span className="text-gray-500 dark:text-gray-400 font-bold text-sm md:text-base">{label}</span>
-            <span className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
+      <div className="relative z-10 flex flex-col items-center justify-center md:flex-row md:justify-between md:items-center gap-2 md:gap-0">
+         {/* Icon Section (Top on mobile, Right on desktop) */}
+        <div className={`order-1 md:order-2 w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center shadow-md md:shadow-lg transform group-hover:rotate-6 group-hover:scale-110 transition-all duration-300`}>
+            {icon}
+        </div>
+
+        {/* Text Section (Bottom on mobile, Left on desktop) */}
+        <div className="order-2 md:order-1 flex flex-col items-center md:items-start space-y-0 md:space-y-2">
+            <span className="text-xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
                {animatedCount}
             </span>
-        </div>
-        
-        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center shadow-lg shadow-gray-200/50 dark:shadow-none transform group-hover:rotate-6 group-hover:scale-110 transition-all duration-300`}>
-            {icon}
+            <span className="text-gray-500 dark:text-gray-400 font-bold text-[10px] md:text-base text-center md:text-start leading-tight">{label}</span>
         </div>
       </div>
     </div>
