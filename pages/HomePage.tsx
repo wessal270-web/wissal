@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAssociations } from '../context/AssociationsContext';
 import { useNews } from '../context/NewsContext';
-import { YouthIcon, SportsIcon, ArrowLeftIcon, CalendarIcon, UserGroupIcon, HomeIcon } from '../components/icons';
+import { YouthIcon, SportsIcon, ArrowLeftIcon, CalendarIcon, HomeIcon } from '../components/icons';
 
 // Custom Hook for counting animation
 const useCountUp = (end: number, duration: number = 2000) => {
@@ -47,7 +47,6 @@ const HomePage = () => {
   const totalAssociations = associations.length;
   const youthCount = associations.filter(a => a.category === 'youth').length;
   const sportsCount = associations.filter(a => a.category === 'sports').length;
-  const totalMembers = associations.reduce((acc, curr) => acc + (curr.members || 0), 0);
   
   const latestNews = news.slice(0, 3);
 
@@ -85,7 +84,7 @@ const HomePage = () => {
       {/* 2. Stats Section (Modernized & Reduced Margin) */}
       <section className="relative -mt-10 z-20 mb-6">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
              <StatCard 
                icon={<HomeIcon className="w-6 h-6" />} 
                count={totalAssociations} 
@@ -106,13 +105,6 @@ const HomePage = () => {
                label="نادي رياضي" 
                colorClass="bg-gradient-to-br from-blue-500 to-cyan-600" 
                delay="200ms"
-             />
-             <StatCard 
-               icon={<UserGroupIcon className="w-6 h-6" />} 
-               count={totalMembers} 
-               label="منخرط" 
-               colorClass="bg-gradient-to-br from-orange-400 to-red-500" 
-               delay="300ms"
              />
           </div>
         </div>
@@ -220,7 +212,7 @@ const HomePage = () => {
                        </div>
 
                        {/* Content */}
-                       <div className={`p-6 flex flex-col ${index === 0 ? 'w-full md:w-1/2 justify-center bg-gradient-to-br from-blue-50/50 to-white dark:from-gray-800 dark:to-gray-800' : 'flex-1'}`}>
+                       <div className={`p-6 flex flex-col ${index === 0 ? 'w-full md:w-1/2 justify-center bg-white dark:bg-gray-800' : 'flex-1'}`}>
                           <h3 className={`font-black text-gray-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight ${index === 0 ? 'text-2xl md:text-3xl' : 'text-lg'}`}>
                              {item.title}
                           </h3>

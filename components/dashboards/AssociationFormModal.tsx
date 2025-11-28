@@ -24,7 +24,6 @@ const defaultFormData: Omit<Association, 'id' | 'documents'> = {
     activityType: '',
     workingHours: '',
     foundedYear: new Date().getFullYear(),
-    members: 0,
     logoUrl: '',
     location: { lat: 0, lng: 0 },
     socialLinks: { facebook: '' },
@@ -153,8 +152,9 @@ const AssociationFormModal: React.FC<AssociationFormModalProps> = ({ isOpen, onC
                         </div>
                         
                         {/* Stats */}
-                        <InputGroup label={t('foundedYear')} name="foundedYear" value={String(formData.foundedYear)} onChange={handleNumberChange} type="number" />
-                        <InputGroup label={t('members')} name="members" value={String(formData.members || 0)} onChange={handleNumberChange} type="number" />
+                        <div className="md:col-span-2">
+                            <InputGroup label={t('foundedYear')} name="foundedYear" value={String(formData.foundedYear)} onChange={handleNumberChange} type="number" />
+                        </div>
 
                         {/* Logo Upload Section */}
                         <div className="md:col-span-2">

@@ -108,10 +108,6 @@ const PresidentDashboard = () => {
                             <span className="text-gray-500">{t('president')}:</span>
                             <span className="font-medium text-gray-800">{assoc.president}</span>
                         </div>
-                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">{t('members')}:</span>
-                            <span className="font-medium text-gray-800">{assoc.members || 0}</span>
-                        </div>
                     </div>
 
                     <button 

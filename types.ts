@@ -14,7 +14,6 @@ export interface Association {
   activityType: string;
   workingHours: string;
   foundedYear: number;
-  members?: number;
   logoUrl: string;
   socialLinks: {
     facebook?: string;
