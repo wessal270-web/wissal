@@ -3,6 +3,7 @@ export type AssociationCategory = 'youth' | 'sports';
 
 export interface Association {
   id: string;
+  refPath?: string; // Path to the Firestore document (root or subcollection)
   ownerId?: string; // ID of the user (President) who created it
   name: string;
   category: AssociationCategory;

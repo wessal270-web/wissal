@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -9,6 +9,8 @@ import { AssociationsProvider } from './context/AssociationsContext';
 import { NewsProvider } from './context/NewsContext';
 import { UsersProvider } from './context/UsersContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { doc, setDoc, increment } from 'firebase/firestore';
+import { db } from './firebase';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -26,6 +28,56 @@ import ProtectedRoute from './components/ProtectedRoute';
 import BackToTopButton from './components/BackToTopButton';
 
 function App() {
+  
+  // Track Total Visitors (Once per session)
+  useEffect(() => {
+    const countVisit = async () => {
+        const hasVisited = sessionStorage.getItem('has_visited_wessal');
+        if (!hasVisited) {
+            try {
+                const statsRef = doc(db, 'stats', 'general');
+                await setDoc(statsRef, { 
+                    totalVisits: increment(1) 
+                }, { merge: true });
+                sessionStorage.setItem('has_visited_wessal', 'true');
+            } catch (error: any) {
+                if (error.code !== 'permission-denied') {
+                    console.error("Error updating visitor count:", error);
+                }
+            }
+        }
+    };
+    countVisit();
+  }, []);
+
+  // Track Real-time Presence (Heartbeat)
+  useEffect(() => {
+    // Generate a session ID for this tab/window
+    const sessionId = sessionStorage.getItem('wessal_session_id') || `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionStorage.setItem('wessal_session_id', sessionId);
+
+    const presenceRef = doc(db, 'presence', sessionId);
+
+    const updateHeartbeat = async () => {
+        try {
+            await setDoc(presenceRef, {
+                timestamp: Date.now(), // Current client time
+                lastSeen: new Date().toISOString()
+            }, { merge: true });
+        } catch (err) {
+            // Ignore offline/permission errors for presence
+        }
+    };
+
+    // Initial heartbeat
+    updateHeartbeat();
+
+    // Update every 30 seconds to keep session alive
+    const interval = setInterval(updateHeartbeat, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <LanguageProvider>
       <ThemeProvider>

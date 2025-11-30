@@ -34,7 +34,8 @@ export const AssociationsProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [associations, setAssociations] = useState<Association[]>([]);
 
   useEffect(() => {
-    // Fetch all associations from all users using a Collection Group Query
+    // Fetch all associations using Collection Group Query
+    // This fetches from both root 'associations' and nested 'users/{id}/associations'
     const q = query(collectionGroup(db, 'associations'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -43,6 +44,7 @@ export const AssociationsProvider: React.FC<{ children: ReactNode }> = ({ childr
         
         return {
             id: doc.id,
+            refPath: doc.ref.path, // Store the precise document path for updates
             ...data,
             name: sanitizeString(data.name),
             president: sanitizeString(data.president),
@@ -60,7 +62,7 @@ export const AssociationsProvider: React.FC<{ children: ReactNode }> = ({ childr
       setAssociations(loadedAssociations);
     }, (error) => {
       if (error.code === 'permission-denied') {
-         console.warn("Firestore permission denied fetching associations. Check firestore.rules.");
+         console.warn("Firestore permission denied fetching associations.");
          setAssociations([]);
       } else {
          console.error("Error fetching associations:", error);
@@ -78,24 +80,25 @@ export const AssociationsProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, ...data } = association;
+      const { id, refPath, ...data } = association;
       
-      // Add ownerId to the data to allow presidents to find their own associations later
+      // Add ownerId to the data
       const associationData = {
           ...data,
           ownerId: auth.currentUser.uid
       };
       
-      // Add to: users/{userId}/associations/{associationId}
-      await addDoc(collection(db, 'users', auth.currentUser.uid, 'associations'), associationData);
+      // FIX: Add to root 'associations' collection instead of user subcollection
+      // This makes it easier for Admins to manage permissions globally
+      await addDoc(collection(db, 'associations'), associationData);
     } catch (error) {
       console.error("Error adding association:", error);
       throw error;
     }
   };
 
+  // Legacy helper: finds doc ref if refPath is missing
   const getAssociationRef = async (id: string) => {
-    // Query to find the document across all subcollections
     const q = query(collectionGroup(db, 'associations'));
     const snapshot = await getDocs(q);
     const docMatch = snapshot.docs.find(d => d.id === id);
@@ -104,10 +107,19 @@ export const AssociationsProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const updateAssociation = async (updatedAssociation: Association) => {
     try {
-      const docRef = await getAssociationRef(updatedAssociation.id);
+      let docRef;
+      
+      // Use the stored path for direct access (efficient & reliable)
+      if (updatedAssociation.refPath) {
+          docRef = doc(db, updatedAssociation.refPath);
+      } else {
+          // Fallback scan for legacy objects without path in state
+          docRef = await getAssociationRef(updatedAssociation.id);
+      }
+
       if (docRef) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, ...data } = updatedAssociation;
+        const { id, refPath, ...data } = updatedAssociation;
         await updateDoc(docRef, data);
       } else {
         console.error("Association document not found for update");
@@ -120,7 +132,16 @@ export const AssociationsProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const deleteAssociation = async (id: string) => {
     try {
-      const docRef = await getAssociationRef(id);
+      // Find the object in state to get its path
+      const association = associations.find(a => a.id === id);
+      
+      let docRef;
+      if (association?.refPath) {
+          docRef = doc(db, association.refPath);
+      } else {
+          docRef = await getAssociationRef(id);
+      }
+
       if (docRef) {
         await deleteDoc(docRef);
       } else {
