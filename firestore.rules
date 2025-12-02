@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== Helpers =====
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function myRole() {
+      return signedIn() ? userDoc(request.auth.uid).data.role : null;
+    }
+
+    function isAdmin() {
+      return myRole() == "admin";
+    }
+
+    function isPresident() {
+      return myRole() == "president";
+    }
+
+    function isUserRole() {
+      return myRole() == "user";
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // =========================
+    // USERS collection
+    // =========================
+    match /users/{userId} {
+
+      // anyone can read user info
+      allow read: if true;
+
+      // create only your own doc
+      allow create: if signedIn() && isSelf(userId);
+
+      // update: admin OR the user himself (cannot modify role or associationId)
+      allow update: if signedIn() && (
+        isAdmin()
+        ||
+        (
+          isSelf(userId)
+          &&
+          !(request.resource.data.keys().hasAny(["role", "associationId"]))
+        )
+      );
+
+      // delete: only admin
+      allow delete: if isAdmin();
+
+      // ===== associations subcollection =====
+      match /associations/{assocId} {
+
+        allow read: if true;
+
+        // create:
+        // - admin can create anywhere
+        // - president can create only under his own doc
+        //   and only if associationId is empty
+        allow create: if signedIn() && (
+          isAdmin()
+          ||
+          (
+            isSelf(userId)
+            && isPresident()
+            && request.resource.data.ownerId == request.auth.uid
+            && (
+              userDoc(request.auth.uid).data.associationId == null ||
+              userDoc(request.auth.uid).data.associationId == ""
+            )
+          )
+        );
+
+        // update/delete:
+        // - admin OR owner
+        allow update, delete: if signedIn() && (
+          isAdmin() ||
+          (resource.data.ownerId == request.auth.uid)
+        );
+      }
+
+      // ===== news subcollection =====
+      match /news/{newsId} {
+        allow read: if true;
+
+        allow create, update, delete: if signedIn() && (
+          isAdmin() || isSelf(userId)
+        );
+      }
+
+      // ===== favorites subcollection =====
+      match /favorites/{favId} {
+        allow read, create, delete: if signedIn() && isSelf(userId);
+        allow update: if false;
+      }
+
+    } // END users/{userId}
+
+  } // END documents
+} // END service
