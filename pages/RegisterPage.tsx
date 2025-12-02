@@ -26,7 +26,8 @@ const RegisterPage = () => {
     
     setLoading(true);
     try {
-      await register(name, email, password, role);
+      // Trim email to remove accidental whitespace
+      await register(name, email.trim(), password, role);
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/email-already-in-use') {

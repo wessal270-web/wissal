@@ -17,7 +17,8 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      // Trim email to remove accidental leading/trailing spaces
+      await login(email.trim(), password);
     } catch (err: any) {
       console.error("Login error:", err);
       const errorCode = err.code;

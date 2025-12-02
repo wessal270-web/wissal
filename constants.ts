@@ -1,7 +1,7 @@
 
 import type { Translations } from './types';
 
-// Empty arrays as we now use Firestore
+// Empty arrays as we now use Firestore - No demo data
 export const associations = [];
 export const newsItems = [];
 export const USERS = [];
@@ -120,5 +120,13 @@ export const TEXTS: Translations = {
   systemHealth: { ar: 'حالة النظام', fr: 'État du système' },
   good: { ar: 'جيدة', fr: 'Bon' },
   manageUsers: { ar: 'إدارة المستخدمين', fr: 'Gérer les utilisateurs' },
-  associationsMenu: { ar: 'الجمعيات', fr: 'Associations' }
+  associationsMenu: { ar: 'الجمعيات', fr: 'Associations' },
+  changePassword: { ar: 'تغيير كلمة المرور', fr: 'Changer le mot de passe' },
+  currentPassword: { ar: 'كلمة المرور الحالية', fr: 'Mot de passe actuel' },
+  newPassword: { ar: 'كلمة المرور الجديدة', fr: 'Nouveau mot de passe' },
+  confirmPassword: { ar: 'تأكيد كلمة المرور', fr: 'Confirmer le mot de passe' },
+  passwordMismatch: { ar: 'كلمات المرور غير متطابقة', fr: 'Les mots de passe ne correspondent pas' },
+  passwordUpdated: { ar: 'تم تحديث كلمة المرور بنجاح', fr: 'Mot de passe mis à jour avec succès' },
+  passwordsDoNotMatch: { ar: 'كلمات المرور لا تتطابق.', fr: 'Les mots de passe ne correspondent pas.' },
+  passwordRequirements: { ar: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.', fr: 'Le mot de passe doit comporter au moins 6 caractères.' }
 };

@@ -7,7 +7,10 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -17,6 +20,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (name: string, email: string, pass: string, role: Role) => Promise<void>;
+  changePassword: (currentPass: string, newPass: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,7 +45,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (docSnap.exists()) {
             setUser({ id: firebaseUser.uid, ...docSnap.data() } as User);
           } else {
-            // Fallback if profile doesn't exist yet
+            // Fallback if profile doesn't exist yet (or just registered)
             setUser({ 
               id: firebaseUser.uid, 
               email: firebaseUser.email || '', 
@@ -53,6 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (error.code !== 'permission-denied') {
              console.error("Error fetching user profile:", error);
           }
+          // Set basic user info to allow app access even if Firestore fetch fails
           setUser({ 
               id: firebaseUser.uid, 
               email: firebaseUser.email || '', 
@@ -93,20 +98,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     // 2. Add User to Firestore 'users' collection
+    // This relies on the security rule: match /users/{userId} { allow write: if isOwner(userId); }
     try {
         await setDoc(doc(db, "users", firebaseUser.uid), userData);
+        
+        // 3. Update local state immediately so UI reflects role without waiting for network fetch
         setUser(userData);
+        
         navigate('/dashboard');
     } catch (error) {
         console.error("Error creating user profile in Firestore:", error);
-        // Ensure user is still logged in locally even if Firestore write fails momentarily
+        // Even if Firestore fails, we set the user locally so they can try again or use basic features
         setUser(userData); 
         navigate('/dashboard');
     }
   };
 
+  const changePassword = async (currentPass: string, newPass: string) => {
+    if (!auth.currentUser || !user) throw new Error("No user logged in");
+    
+    // Re-authenticate user to ensure security session is fresh
+    const credential = EmailAuthProvider.credential(user.email, currentPass);
+    await reauthenticateWithCredential(auth.currentUser, credential);
+    
+    // Update password
+    await updatePassword(auth.currentUser, newPass);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, changePassword }}>
       {!loading && children}
     </AuthContext.Provider>
   );

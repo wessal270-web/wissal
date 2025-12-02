@@ -16,6 +16,7 @@ const ManageNews: React.FC<ManageNewsProps> = ({ onBack }) => {
     
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const handleOpenAddModal = () => {
         setEditingNews(null);
@@ -32,23 +33,37 @@ const ManageNews: React.FC<ManageNewsProps> = ({ onBack }) => {
         setEditingNews(null);
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (window.confirm(t('confirmDeleteNews'))) {
-            deleteNews(id);
+            setLoading(true);
+            try {
+                await deleteNews(id);
+            } catch (error: any) {
+                alert("فشل حذف الخبر: " + error.message);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
-    const handleSave = (newsData: Omit<NewsItem, 'id'> & { id?: string }) => {
-        if (editingNews) {
-            updateNews({ ...editingNews, ...newsData });
-        } else {
-            const newNewsItem: NewsItem = {
-                ...newsData,
-                id: `news-${Date.now()}`,
-            } as NewsItem;
-            addNews(newNewsItem);
+    const handleSave = async (newsData: Omit<NewsItem, 'id'> & { id?: string }) => {
+        setLoading(true);
+        try {
+            if (editingNews) {
+                await updateNews({ ...editingNews, ...newsData });
+            } else {
+                const newNewsItem: NewsItem = {
+                    ...newsData,
+                    id: `news-${Date.now()}`,
+                } as NewsItem;
+                await addNews(newNewsItem);
+            }
+            handleCloseModal();
+        } catch (error: any) {
+            alert("فشل حفظ الخبر: " + error.message);
+        } finally {
+            setLoading(false);
         }
-        handleCloseModal();
     };
 
     return (
@@ -67,7 +82,7 @@ const ManageNews: React.FC<ManageNewsProps> = ({ onBack }) => {
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-lg shadow overflow-hidden relative">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
@@ -101,6 +116,12 @@ const ManageNews: React.FC<ManageNewsProps> = ({ onBack }) => {
                         </tbody>
                     </table>
                 </div>
+                
+                {loading && (
+                    <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+                        <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                )}
             </div>
 
             <NewsFormModal

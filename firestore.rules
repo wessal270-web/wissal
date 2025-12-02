@@ -1,108 +1,78 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ===== Helpers =====
-    function signedIn() {
+    // --- Helper Functions ---
+    function isAuthenticated() {
       return request.auth != null;
     }
-
-    function userDoc(uid) {
-      return get(/databases/$(database)/documents/users/$(uid));
+    
+    // Check if the authenticated user matches the userId in the path
+    function isPathOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function myRole() {
-      return signedIn() ? userDoc(request.auth.uid).data.role : null;
-    }
-
+    // Check if the current user has the 'admin' role in their user profile
+    // safe check: verify doc exists before getting data
     function isAdmin() {
-      return myRole() == "admin";
+       return isAuthenticated() && 
+         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    function isPresident() {
-      return myRole() == "president";
-    }
-
-    function isUserRole() {
-      return myRole() == "user";
-    }
-
-    function isSelf(uid) {
-      return signedIn() && request.auth.uid == uid;
-    }
-
-    // =========================
-    // USERS collection
-    // =========================
-    match /users/{userId} {
-
-      // anyone can read user info
+    // --- 1. User Subcollections (Explicit Matches) ---
+    // This allows Presidents to manage their own associations/news
+    match /users/{userId}/associations/{docId} {
       allow read: if true;
+      // Allow owner to create without admin check (simpler/safer)
+      allow create: if isPathOwner(userId);
+      // Allow owner OR admin to update/delete
+      allow update, delete: if isPathOwner(userId) || isAdmin();
+    }
 
-      // create only your own doc
-      allow create: if signedIn() && isSelf(userId);
+    match /users/{userId}/news/{docId} {
+      allow read: if true;
+      allow create: if isPathOwner(userId);
+      allow update, delete: if isPathOwner(userId) || isAdmin();
+    }
 
-      // update: admin OR the user himself (cannot modify role or associationId)
-      allow update: if signedIn() && (
-        isAdmin()
-        ||
-        (
-          isSelf(userId)
-          &&
-          !(request.resource.data.keys().hasAny(["role", "associationId"]))
-        )
-      );
-
-      // delete: only admin
+    // --- 2. User Profiles ---
+    match /users/{userId} {
+      allow read: if true; 
+      // Allow user to register/update their own profile
+      allow create, update: if isPathOwner(userId) || isAdmin();
       allow delete: if isAdmin();
+    }
 
-      // ===== associations subcollection =====
-      match /associations/{assocId} {
+    // --- 3. Root Collections (Legacy/Fallback) ---
+    match /associations/{docId} {
+      allow read: if true;
+      // Allow creation by any authenticated user (legacy support)
+      allow create: if isAuthenticated();
+      // Update/Delete requires ownership or admin rights
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.ownerId == request.auth.uid);
+    }
 
-        allow read: if true;
+    match /news/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
 
-        // create:
-        // - admin can create anywhere
-        // - president can create only under his own doc
-        //   and only if associationId is empty
-        allow create: if signedIn() && (
-          isAdmin()
-          ||
-          (
-            isSelf(userId)
-            && isPresident()
-            && request.resource.data.ownerId == request.auth.uid
-            && (
-              userDoc(request.auth.uid).data.associationId == null ||
-              userDoc(request.auth.uid).data.associationId == ""
-            )
-          )
-        );
+    // --- 4. Collection Group Queries (Public Read) ---
+    match /{path=**}/associations/{docId} {
+      allow read: if true;
+    }
+    match /{path=**}/news/{docId} {
+      allow read: if true;
+    }
 
-        // update/delete:
-        // - admin OR owner
-        allow update, delete: if signedIn() && (
-          isAdmin() ||
-          (resource.data.ownerId == request.auth.uid)
-        );
-      }
-
-      // ===== news subcollection =====
-      match /news/{newsId} {
-        allow read: if true;
-
-        allow create, update, delete: if signedIn() && (
-          isAdmin() || isSelf(userId)
-        );
-      }
-
-      // ===== favorites subcollection =====
-      match /favorites/{favId} {
-        allow read, create, delete: if signedIn() && isSelf(userId);
-        allow update: if false;
-      }
-
-    } // END users/{userId}
-
-  } // END documents
-} // END service
+    // --- 5. System Collections ---
+    match /stats/{docId} {
+       allow read, write: if true;
+    }
+    match /presence/{docId} {
+       allow read, write: if true;
+    }
+  }
+}

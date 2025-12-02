@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { Association } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -16,6 +15,7 @@ const ManageAssociations: React.FC<ManageAssociationsProps> = ({ onBack }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAssociation, setEditingAssociation] = useState<Association | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleOpenAddModal = () => {
         setEditingAssociation(null);
@@ -36,10 +36,18 @@ const ManageAssociations: React.FC<ManageAssociationsProps> = ({ onBack }) => {
         setDeleteId(id);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deleteId) {
-            deleteAssociation(deleteId);
-            setDeleteId(null);
+            setIsSaving(true);
+            try {
+                await deleteAssociation(deleteId);
+                setDeleteId(null);
+            } catch (error: any) {
+                console.error("Delete failed:", error);
+                alert("فشل الحذف: " + error.message);
+            } finally {
+                setIsSaving(false);
+            }
         }
     };
 
@@ -47,21 +55,22 @@ const ManageAssociations: React.FC<ManageAssociationsProps> = ({ onBack }) => {
         setDeleteId(null);
     };
 
-    const handleSave = (associationData: Omit<Association, 'id'> & { id?: string }) => {
-        if (editingAssociation) {
-            // Update
-            updateAssociation({ ...editingAssociation, ...associationData });
-        } else {
-            // Add
-            const newAssociation: Association = {
-                ...associationData,
-                id: `assoc-admin-${Date.now()}`,
-                documents: [], // Default empty values for non-form fields
-                socialLinks: {},
-            } as Association;
-            addAssociation(newAssociation);
+    const handleSave = async (associationData: any) => {
+        setIsSaving(true);
+        try {
+            if (editingAssociation) {
+                await updateAssociation({ ...editingAssociation, ...associationData });
+            } else {
+                // Using Context addAssociation (restored logic)
+                await addAssociation(associationData as Association);
+            }
+            handleCloseModal();
+        } catch (error: any) {
+             console.error("Operation failed:", error);
+             alert("فشل الحفظ: " + error.message);
+        } finally {
+            setIsSaving(false);
         }
-        handleCloseModal();
     };
 
     return (
@@ -126,7 +135,6 @@ const ManageAssociations: React.FC<ManageAssociationsProps> = ({ onBack }) => {
                 initialData={editingAssociation}
             />
 
-            {/* Delete Confirmation Modal */}
             {deleteId && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
                     <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 animate-fade-in-up">
@@ -144,11 +152,21 @@ const ManageAssociations: React.FC<ManageAssociationsProps> = ({ onBack }) => {
                             </button>
                             <button 
                                 onClick={confirmDelete} 
-                                className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-colors"
+                                disabled={isSaving}
+                                className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-colors disabled:opacity-50"
                             >
-                                {t('delete')}
+                                {isSaving ? '...' : t('delete')}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+            
+            {isSaving && (
+                <div className="fixed inset-0 bg-black/20 z-[250] flex items-center justify-center backdrop-blur-[1px]">
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex items-center gap-3">
+                        <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="font-bold text-gray-700 dark:text-gray-200">جاري المعالجة...</span>
                     </div>
                 </div>
             )}

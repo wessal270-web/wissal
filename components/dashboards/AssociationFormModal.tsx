@@ -29,6 +29,8 @@ const defaultFormData: Omit<Association, 'id' | 'documents'> = {
     socialLinks: { facebook: '' },
 };
 
+const inputClasses = "block w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder-gray-400 dark:placeholder-gray-500";
+
 const AssociationFormModal: React.FC<AssociationFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const { t } = useLanguage();
     const [formData, setFormData] = useState(defaultFormData);
@@ -94,42 +96,76 @@ const AssociationFormModal: React.FC<AssociationFormModalProps> = ({ isOpen, onC
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" role="dialog" aria-modal="true">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-                <div className="p-6 border-b">
-                    <h2 className="text-xl font-bold text-cyan-800">
+        // Added pb-20 on mobile to lift the modal above the bottom navigation bar
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex justify-center items-end md:items-center pb-20 md:pb-0 px-0 md:px-4" role="dialog" aria-modal="true">
+            <div className="bg-white dark:bg-gray-800 w-full md:rounded-2xl md:max-w-3xl h-[85vh] md:h-auto md:max-h-[90vh] flex flex-col rounded-t-3xl shadow-2xl animate-fade-in-up">
+                
+                {/* Modal Header */}
+                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 rounded-t-3xl">
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white">
                         {initialData ? t('editAssociation') : t('addAssociation')}
                     </h2>
+                    <button onClick={onClose} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-                <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto">
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+
+                {/* Scrollable Form Content */}
+                <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto custom-scrollbar bg-white dark:bg-gray-800">
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                         {/* Name */}
                         <div className="md:col-span-2">
                              <InputGroup label={t('nameAr')} name="name" value={formData.name} onChange={handleChange} required />
                         </div>
                         
                         {/* Category & Municipality */}
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">{t('category')}</label>
-                           <select name="category" value={formData.category} onChange={handleChange} className="input-field" required>
-                               <option value="youth">{t('youth')}</option>
-                               <option value="sports">{t('sports')}</option>
-                           </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">البلدية</label>
-                            <select 
-                                name="municipality" 
-                                value={formData.municipality} 
-                                onChange={handleChange} 
-                                className="input-field"
-                                required
-                            >
-                                <option value="">اختر البلدية</option>
-                                {saidaMunicipalities.map((mun, idx) => (
-                                    <option key={idx} value={mun}>{mun}</option>
-                                ))}
-                            </select>
+                        <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{t('category')}</label>
+                               <div className="relative">
+                                   <select 
+                                       name="category" 
+                                       value={formData.category} 
+                                       onChange={handleChange} 
+                                       className={`${inputClasses} appearance-none cursor-pointer`}
+                                       required
+                                    >
+                                       <option value="youth" className="text-gray-900 dark:text-gray-900">🟢 {t('youth')}</option>
+                                       <option value="sports" className="text-gray-900 dark:text-gray-900">🔵 {t('sports')}</option>
+                                   </select>
+                                   <div className="pointer-events-none absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto flex items-center px-3 text-gray-500">
+                                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
+                                   </div>
+                               </div>
+                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">يرجى تحديد نوع الجمعية بدقة</p>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">البلدية</label>
+                                <div className="relative">
+                                    <select 
+                                        name="municipality" 
+                                        value={formData.municipality} 
+                                        onChange={handleChange} 
+                                        className={`${inputClasses} appearance-none cursor-pointer`}
+                                        required
+                                    >
+                                        <option value="" className="text-gray-900">اختر البلدية</option>
+                                        {saidaMunicipalities.map((mun, idx) => (
+                                            <option key={idx} value={mun} className="text-gray-900">{mun}</option>
+                                        ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto flex items-center px-3 text-gray-500">
+                                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
+                                   </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* President */}
@@ -150,6 +186,11 @@ const AssociationFormModal: React.FC<AssociationFormModalProps> = ({ isOpen, onC
                         <div className="md:col-span-2">
                              <InputGroup label={`${t('activityType')}`} name="activityType" value={formData.activityType} onChange={handleChange} />
                         </div>
+
+                         {/* Working Hours */}
+                        <div className="md:col-span-2">
+                             <InputGroup label={t('workingHours')} name="workingHours" value={formData.workingHours} onChange={handleChange} />
+                        </div>
                         
                         {/* Stats */}
                         <div className="md:col-span-2">
@@ -157,16 +198,16 @@ const AssociationFormModal: React.FC<AssociationFormModalProps> = ({ isOpen, onC
                         </div>
 
                         {/* Logo Upload Section */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">شعار الجمعية</label>
+                        <div className="md:col-span-2 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">شعار الجمعية</label>
                             
                             <div className="flex items-start gap-4">
                                 {/* Preview */}
-                                <div className="relative w-24 h-24 rounded-xl border-2 border-gray-200 bg-gray-50 overflow-hidden flex-shrink-0">
+                                <div className="relative w-24 h-24 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 overflow-hidden flex-shrink-0 shadow-sm">
                                     {formData.logoUrl ? (
                                         <img src={formData.logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
@@ -192,33 +233,18 @@ const AssociationFormModal: React.FC<AssociationFormModalProps> = ({ isOpen, onC
                                         />
                                         <label 
                                             htmlFor="logo-upload"
-                                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 cursor-pointer transition-colors shadow-sm ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors shadow-sm ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             <DownloadIcon /> 
                                             <span>{formData.logoUrl ? 'تغيير الصورة' : 'رفع صورة الشعار'}</span>
                                         </label>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                                         الصيغ المدعومة: PNG, JPG, WebP. الحد الأقصى: 2 ميجابايت.
                                     </p>
                                     {uploadError && (
                                         <p className="text-xs text-red-500 mt-1 font-bold">{uploadError}</p>
                                     )}
-                                    
-                                    {/* URL Fallback */}
-                                    <div className="mt-2">
-                                         <details className="text-xs text-gray-400 cursor-pointer">
-                                            <summary>أو أدخل الرابط يدوياً</summary>
-                                            <input 
-                                                type="text" 
-                                                name="logoUrl"
-                                                value={formData.logoUrl}
-                                                onChange={handleChange}
-                                                placeholder="https://..."
-                                                className="mt-1 w-full p-2 border border-gray-200 rounded text-gray-700"
-                                            />
-                                         </details>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -227,21 +253,25 @@ const AssociationFormModal: React.FC<AssociationFormModalProps> = ({ isOpen, onC
                         <div className="md:col-span-2">
                             <InputGroup label="رابط صفحة الفيسبوك" name="socialLinks.facebook" value={formData.socialLinks?.facebook || ''} onChange={handleChange} />
                         </div>
-                    </div>
-                    
-                    <div className="p-6 border-t bg-gray-50 flex justify-end gap-3 rounded-b-lg">
-                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                            {t('cancel')}
-                        </button>
-                        <button 
-                            type="submit" 
-                            disabled={isUploading}
-                            className="px-4 py-2 bg-cyan-600 text-white font-semibold rounded-lg shadow-md hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isUploading ? 'جاري الرفع...' : t('save')}
-                        </button>
+                        
+                        {/* Spacing for mobile scroll */}
+                        <div className="h-10 md:hidden"></div>
                     </div>
                 </form>
+
+                {/* Footer Actions */}
+                <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex justify-end gap-3 rounded-b-2xl md:rounded-b-2xl sticky bottom-0 z-10 pb-6 md:pb-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                    <button type="button" onClick={onClose} className="px-5 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        {t('cancel')}
+                    </button>
+                    <button 
+                        onClick={handleSubmit}
+                        disabled={isUploading}
+                        className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-200/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
+                    >
+                        {isUploading ? 'جاري الرفع...' : t('save')}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -259,7 +289,7 @@ interface InputGroupProps {
 
 const InputGroup: React.FC<InputGroupProps> = ({ label, name, value, onChange, type = 'text', required = false, step }) => (
     <div>
-        <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor={name} className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
             {label} {required && <span className="text-red-500">*</span>}
         </label>
         <input
@@ -270,31 +300,9 @@ const InputGroup: React.FC<InputGroupProps> = ({ label, name, value, onChange, t
             onChange={onChange}
             required={required}
             step={step}
-            className="input-field"
+            className={inputClasses}
         />
     </div>
 );
-
-// Add a simple style for the input fields in index.html for consistency
-const style = document.createElement('style');
-style.textContent = `
-    .input-field {
-        display: block;
-        width: 100%;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #D1D5DB;
-        border-radius: 0.375rem;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        background-color: #F9FAFB;
-    }
-    .input-field:focus {
-        outline: none;
-        --tw-ring-color: #0891B2;
-        border-color: #0891B2;
-        box-shadow: 0 0 0 1px #0891B2;
-        background-color: white;
-    }
-`;
-document.head.append(style);
 
 export default AssociationFormModal;

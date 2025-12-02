@@ -186,6 +186,12 @@ export const PulseIcon = ({ className = "w-6 h-6" }: { className?: string }) => 
     </svg>
 );
 
+export const KeyIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 010-2z" clipRule="evenodd" />
+    </svg>
+);
+
 export const WessalLogo = ({ className = "w-10 h-10" }: { className?: string }) => (
   <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>

@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { NewsItem } from '../types';
 import { db, auth } from '../firebase';
@@ -65,8 +66,7 @@ export const NewsProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addNews = async (item: NewsItem) => {
     if (!auth.currentUser) {
-        console.error("User must be logged in to add news");
-        return;
+        throw new Error("يجب تسجيل الدخول");
     }
 
     try {
@@ -76,6 +76,7 @@ export const NewsProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await addDoc(collection(db, 'users', auth.currentUser.uid, 'news'), data);
     } catch (error) {
         console.error("Error adding news:", error);
+        throw error;
     }
   };
 
@@ -96,9 +97,11 @@ export const NewsProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await updateDoc(docRef, data);
         } else {
             console.error("News document not found for update");
+            throw new Error("News not found");
         }
     } catch (error) {
         console.error("Error updating news:", error);
+        throw error;
     }
   };
 
@@ -109,9 +112,11 @@ export const NewsProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await deleteDoc(docRef);
         } else {
             console.error("News document not found for deletion");
+            throw new Error("News not found");
         }
     } catch (error) {
         console.error("Error deleting news:", error);
+        throw error;
     }
   };
 

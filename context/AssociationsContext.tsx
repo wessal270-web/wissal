@@ -1,7 +1,7 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Association } from '../types';
 import { db, auth } from '../firebase';
+import { useAuth } from '../hooks/useAuth';
 import { 
   collection, 
   addDoc, 
@@ -9,9 +9,8 @@ import {
   deleteDoc, 
   doc, 
   onSnapshot, 
-  collectionGroup, 
   query,
-  getDocs
+  collectionGroup
 } from 'firebase/firestore';
 
 interface AssociationsContextType {
@@ -23,7 +22,6 @@ interface AssociationsContextType {
 
 const AssociationsContext = createContext<AssociationsContextType | undefined>(undefined);
 
-// Helper to handle legacy data {ar: '...', fr: '...'} or plain strings
 const sanitizeString = (val: any): string => {
   if (typeof val === 'string') return val;
   if (val && typeof val === 'object' && 'ar' in val) return String(val.ar);
@@ -32,19 +30,18 @@ const sanitizeString = (val: any): string => {
 
 export const AssociationsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [associations, setAssociations] = useState<Association[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Fetch all associations using Collection Group Query
-    // This fetches from both root 'associations' and nested 'users/{id}/associations'
+    // Use collectionGroup to fetch associations from both root and any user subcollections
     const q = query(collectionGroup(db, 'associations'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loadedAssociations = snapshot.docs.map(doc => {
         const data = doc.data();
-        
         return {
             id: doc.id,
-            refPath: doc.ref.path, // Store the precise document path for updates
+            refPath: doc.ref.path, // Store reference path to know where to update/delete
             ...data,
             name: sanitizeString(data.name),
             president: sanitizeString(data.president),
@@ -58,98 +55,103 @@ export const AssociationsProvider: React.FC<{ children: ReactNode }> = ({ childr
             })) : []
         } as Association;
       });
-      
       setAssociations(loadedAssociations);
     }, (error) => {
-      if (error.code === 'permission-denied') {
-         console.warn("Firestore permission denied fetching associations.");
-         setAssociations([]);
-      } else {
-         console.error("Error fetching associations:", error);
-      }
+         if (error.code === 'permission-denied') {
+             console.warn("Permission denied fetching associations. Check firestore.rules.");
+         } else {
+             console.error("Error fetching associations:", error);
+         }
     });
 
     return () => unsubscribe();
   }, []);
 
   const addAssociation = async (association: Association) => {
-    if (!auth.currentUser) {
-        console.error("User must be logged in to add an association");
-        return;
+    if (!auth.currentUser) throw new Error("يجب تسجيل الدخول");
+    const uid = auth.currentUser.uid;
+
+    // Simple check: 1 association per president (unless admin)
+    if (user && user.role !== 'admin') {
+        const existing = associations.find(a => a.ownerId === uid);
+        if (existing) throw new Error("لديك جمعية مسجلة بالفعل.");
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, refPath, ...data } = association;
+    
+    // Construct payload
+    const payload = {
+        name: data.name || '',
+        category: data.category || 'youth',
+        president: data.president || '',
+        phone: data.phone || '',
+        email: data.email || '',
+        address: data.address || '',
+        municipality: data.municipality || '',
+        activityType: data.activityType || '',
+        workingHours: data.workingHours || '',
+        foundedYear: Number(data.foundedYear) || new Date().getFullYear(),
+        logoUrl: data.logoUrl || '',
+        
+        socialLinks: {
+          facebook: data.socialLinks?.facebook || '',
+          instagram: data.socialLinks?.instagram || '',
+          twitter: data.socialLinks?.twitter || ''
+        },
+        documents: data.documents || [],
+        location: data.location || { lat: 0, lng: 0 },
+        
+        ownerId: String(uid), 
+        createdAt: new Date().toISOString()
+    };
+    
+    // Remove undefined values
+    const safePayload = JSON.parse(JSON.stringify(payload));
+    
+    // Strictly write to the User's Subcollection: /users/{uid}/associations
+    // This matches the firestore.rules: match /users/{userId}/associations/{docId} { allow write: if isOwner(userId); }
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, refPath, ...data } = association;
-      
-      // Add ownerId to the data
-      const associationData = {
-          ...data,
-          ownerId: auth.currentUser.uid
-      };
-      
-      // FIX: Add to root 'associations' collection instead of user subcollection
-      // This makes it easier for Admins to manage permissions globally
-      await addDoc(collection(db, 'associations'), associationData);
-    } catch (error) {
-      console.error("Error adding association:", error);
-      throw error;
+        await addDoc(collection(db, 'users', uid, 'associations'), safePayload);
+    } catch (error: any) {
+        console.error("Add association failed:", error);
+        throw error;
     }
   };
 
-  // Legacy helper: finds doc ref if refPath is missing
-  const getAssociationRef = async (id: string) => {
-    const q = query(collectionGroup(db, 'associations'));
-    const snapshot = await getDocs(q);
-    const docMatch = snapshot.docs.find(d => d.id === id);
-    return docMatch ? docMatch.ref : null;
-  };
-
-  const updateAssociation = async (updatedAssociation: Association) => {
-    try {
-      let docRef;
-      
-      // Use the stored path for direct access (efficient & reliable)
-      if (updatedAssociation.refPath) {
-          docRef = doc(db, updatedAssociation.refPath);
-      } else {
-          // Fallback scan for legacy objects without path in state
-          docRef = await getAssociationRef(updatedAssociation.id);
-      }
-
-      if (docRef) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, refPath, ...data } = updatedAssociation;
-        await updateDoc(docRef, data);
-      } else {
-        console.error("Association document not found for update");
-      }
-    } catch (error) {
-      console.error("Error updating association:", error);
-      throw error;
+  const updateAssociation = async (association: Association) => {
+    let docRef;
+    if (association.refPath) {
+        docRef = doc(db, association.refPath);
+    } else {
+        if (association.ownerId) {
+             docRef = doc(db, 'users', association.ownerId, 'associations', association.id);
+        } else {
+             docRef = doc(db, 'associations', association.id);
+        }
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, refPath, ...data } = association;
+    
+    const payload = { ...data, updatedAt: new Date().toISOString() };
+    const safePayload = JSON.parse(JSON.stringify(payload));
+
+    await updateDoc(docRef, safePayload);
   };
 
   const deleteAssociation = async (id: string) => {
-    try {
-      // Find the object in state to get its path
-      const association = associations.find(a => a.id === id);
-      
-      let docRef;
-      if (association?.refPath) {
-          docRef = doc(db, association.refPath);
-      } else {
-          docRef = await getAssociationRef(id);
-      }
+    const assoc = associations.find(a => a.id === id);
+    if (!assoc) throw new Error("Association not found");
 
-      if (docRef) {
-        await deleteDoc(docRef);
-      } else {
-        console.error("Association document not found for deletion");
-      }
-    } catch (error) {
-      console.error("Error deleting association:", error);
-      throw error;
+    if (assoc.refPath) {
+        await deleteDoc(doc(db, assoc.refPath));
+    } else {
+        if (assoc.ownerId) {
+             await deleteDoc(doc(db, 'users', assoc.ownerId, 'associations', id));
+        } else {
+             await deleteDoc(doc(db, 'associations', id));
+        }
     }
   };
 
